@@ -1,0 +1,124 @@
+/* Тема «Рунет, 1999» для окон приложений.
+   Меняется только оформление экрана: сами печатные листы не затрагиваются. */
+@media screen {
+  body {
+    background-color: #cdb26f;
+    background-image: url("/wallpaper.svg");
+  }
+}
+@media print {
+  body { background: #fff !important; background-image: none !important; }
+}
+
+/* ---------- верхняя панель ---------- */
+body .bar {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  border-bottom: 3px ridge #fff;
+  padding: 6px 14px;
+  gap: 14px;
+  color: #fff;
+}
+body .bar::before {
+  content: "Распечатай-это";
+  font: 900 20px "Arial Black", Impact, Arial, sans-serif;
+  color: #ffff00;
+  text-shadow: 2px 2px 0 #000;
+}
+body .bar a:link, body .bar a:visited { color: #fff; font: bold 14px Arial, sans-serif; text-decoration: underline; }
+body #saveStatus { color: #dfe9f0; font: bold 12px Arial, sans-serif; }
+
+/* ---------- кнопки ---------- */
+body .btn {
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  color: #000080;
+  font: bold 14px Arial, sans-serif;
+  box-shadow: inset -1px -1px #808080;
+}
+body .btn:hover { background: #d8d8d8; }
+body .btn:active { border-color: #404040 #fff #fff #404040; box-shadow: inset 1px 1px #808080; }
+body .btn.ghost { color: #000; font-weight: normal; background: #c0c0c0; }
+body .btn.small { padding: 3px 9px; font-size: 12px; }
+body .btn:disabled { color: #808080; text-shadow: 1px 1px #fff; cursor: default; }
+
+/* ---------- окна с параметрами ---------- */
+body .form, body .box {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-radius: 0;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  color: #000;
+  font-family: Arial, sans-serif;
+  padding: 0 14px 14px;
+}
+body .form::before {
+  content: "Параметры";
+  display: block;
+  margin: 2px -12px 8px;
+  padding: 3px 8px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font: bold 14px Arial, sans-serif;
+}
+body .box > h3 {
+  margin: 2px -12px 8px;
+  padding: 3px 8px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font: bold 14px Arial, sans-serif;
+}
+body .form label, body .box label { color: #000; font: bold 13px Arial, sans-serif; }
+body .form input, body .form select, body .form textarea,
+body .box input, body .box select {
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  font: 14px Arial, sans-serif;
+}
+body .hint { color: #333; font: 12px Arial, sans-serif; }
+body .warn {
+  background: #ffffe1;
+  border: 1px solid #000;
+  border-radius: 0;
+  box-shadow: 2px 2px 0 #808080;
+  color: #cc0000;
+  font: bold 13px Arial, sans-serif;
+}
+
+/* ---------- списки ---------- */
+body .list, body .people {
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 4px;
+}
+body .item .del {
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  color: #000;
+  font-weight: bold;
+}
+body .pbtn {
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  color: #000;
+  font: 13px Arial, sans-serif;
+  box-shadow: inset -1px -1px #808080;
+}
+body .pbtn.on {
+  background: #000080;
+  color: #fff;
+  border-color: #404040 #fff #fff #404040;
+  box-shadow: none;
+  font-weight: bold;
+}
+body .pbtn small { color: inherit; opacity: .8; }

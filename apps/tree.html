@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Родословная</title>
+<style>
+  :root { --bg:#f3ede1; --ink:#2b2118; --muted:#7a6a5a; --line:#e0d4bf; --card:#fffdf8; --accent:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", system-ui, Roboto, Arial, sans-serif; }
+  .bar { display:flex; gap:12px; align-items:center; padding:10px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  .bar a { color:var(--ink); font-weight:600; text-decoration:none; }
+  .bar .sp { flex:1; }
+  #saveStatus { color:var(--muted); font-size:13px; }
+  .btn { border:0; border-radius:9px; padding:9px 16px; font:inherit; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .btn.small { padding:5px 10px; font-size:13px; }
+  .layout { display:grid; grid-template-columns: 360px 1fr; gap:20px; padding:20px; align-items:start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .side { display:flex; flex-direction:column; gap:16px; }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .box h3 { margin:0 0 4px; font-size:15px; }
+  .box label { display:block; font-weight:600; font-size:13px; margin:10px 0 4px; }
+  .box input, .box select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .people { display:flex; flex-direction:column; gap:4px; max-height:220px; overflow:auto; margin:8px 0; }
+  .pbtn { text-align:left; border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font:inherit; }
+  .pbtn.on { border-color:var(--accent); background:#fdeceb; font-weight:600; }
+  .pbtn small { color:var(--muted); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .stage { overflow:auto; display:flex; justify-content:center; }
+  .fitter { transform-origin: top center; }
+
+  /* ----- лист ----- */
+  .sheet { background:var(--paper); color:var(--ink2); position:relative; box-shadow:0 10px 40px -14px rgba(60,40,10,.4); overflow:hidden; display:flex; flex-direction:column; font-family:Georgia, "Times New Roman", serif; }
+  .sheet .brd { position:absolute; inset:7mm; border:1.6mm double var(--c1); pointer-events:none; }
+  .head { display:flex; align-items:center; justify-content:center; gap:7mm; padding:14mm 14mm 2mm; text-align:center; }
+  .head svg { height:24mm; width:auto; flex:none; }
+  .head h1 { margin:0; font-size:28pt; line-height:1.1; color:var(--c1); letter-spacing:.04em; text-transform:uppercase; }
+  .head .sub { margin-top:1.5mm; font-style:italic; font-size:11pt; color:var(--c2); }
+  .treebox { position:relative; flex:1; margin:3mm 14mm; }
+  .tree { position:absolute; left:0; top:0; transform-origin:0 0; }
+  .tree svg { position:absolute; left:0; top:0; overflow:visible; }
+  .pcard { position:absolute; width:160px; height:76px; border:1.5px solid var(--c1); border-radius:8px; background:var(--cardbg); padding:6px 8px; text-align:center; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+  .pcard .n { font-weight:700; font-size:13.5px; line-height:1.15; color:var(--ink2); }
+  .pcard .y { font-size:11px; color:#6b5d4d; margin-top:2px; }
+  .pcard .t { font-size:10.5px; font-style:italic; color:var(--c2); margin-top:2px; line-height:1.15; }
+  .foot { text-align:center; padding:0 14mm 12mm; font-size:9pt; color:#8a7a68; }
+  .foot b { color:var(--c1); font-weight:600; }
+  .emptyhint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#9a8a78; font-style:italic; }
+
+  .th-classic { --paper:#fffaf0; --ink2:#2b2118; --c1:#6b4423; --c2:#9a6b00; --cardbg:#fffdf6; }
+  .th-poster  { --paper:#f6e9cf; --ink2:#2a1a14; --c1:#b3261e; --c2:#7a1613; --cardbg:#fff7e6; }
+  .th-forest  { --paper:#f3f7ee; --ink2:#1f2a1c; --c1:#2f6b3a; --c2:#6a5a1a; --cardbg:#fbfdf8; }
+
+  @media print {
+    body { background:#fff; }
+    .bar, .side { display:none !important; }
+    .layout { display:block; padding:0; }
+    .stage { display:block; overflow:visible; }
+    .fitter { transform:none !important; height:auto !important; width:auto !important; }
+    .sheet { box-shadow:none; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+<style id="pageStyle">@page { size: A4 landscape; margin: 0; }</style>
+<link rel="stylesheet" href="/app-retro.css">
+</head>
+<body>
+<div class="bar">
+  <a href="/account.html">← Кабинет</a>
+  <span class="sp"></span>
+  <span id="saveStatus"></span>
+  <button class="btn" id="printBtn" type="button">Печать / PDF</button>
+</div>
+
+<div class="layout">
+  <div class="side">
+    <div class="box">
+      <h3>Оформление листа</h3>
+      <label for="surname">Фамилия рода</label>
+      <input id="surname" type="text" maxlength="30" placeholder="Ивановых">
+      <label for="motto">Девиз рода (необязательно)</label>
+      <input id="motto" type="text" maxlength="80" placeholder="Пришли, поели, остались">
+      <div class="two">
+        <div><label for="theme">Стиль</label>
+          <select id="theme">
+            <option value="classic">Классика</option>
+            <option value="poster">Плакат</option>
+            <option value="forest">Лесной</option>
+          </select></div>
+        <div><label for="paper">Лист</label>
+          <select id="paper">
+            <option value="A4L">А4 альбомный</option>
+            <option value="A4P">А4 книжный</option>
+            <option value="A3L">А3 альбомный</option>
+            <option value="A3P">А3 книжный</option>
+          </select></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Люди (<span id="count">0</span>)</h3>
+      <div class="people" id="people"></div>
+      <div class="row">
+        <button class="btn small" id="add" type="button">+ Добавить человека</button>
+        <button class="btn ghost small" id="demo" type="button">Пример</button>
+        <button class="btn ghost small" id="clear" type="button">Очистить</button>
+      </div>
+    </div>
+
+    <div class="box" id="editor" style="display:none">
+      <h3>Данные человека</h3>
+      <label for="f_name">Имя</label>
+      <input id="f_name" type="text" maxlength="40" placeholder="Мария Ивановна">
+      <div class="two">
+        <div><label for="f_years">Годы жизни</label><input id="f_years" type="text" maxlength="18" placeholder="1952"></div>
+        <div><label for="f_spouse">Супруг(а)</label><select id="f_spouse"></select></div>
+      </div>
+      <label for="f_title">Шуточный титул</label>
+      <div class="row" style="flex-wrap:nowrap">
+        <input id="f_title" type="text" maxlength="44" placeholder="Главный по борщу">
+        <button class="btn ghost small" id="rnd" type="button" title="Случайный титул">🎲</button>
+      </div>
+      <div class="two">
+        <div><label for="f_father">Отец</label><select id="f_father"></select></div>
+        <div><label for="f_mother">Мать</label><select id="f_mother"></select></div>
+      </div>
+      <div style="margin-top:12px"><button class="btn ghost small" id="del" type="button">Удалить человека</button></div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage"><div class="fitter" id="fitter">
+    <div class="sheet th-classic" id="sheet">
+      <div class="brd"></div>
+      <div class="head"><div id="arms"></div><div><h1 id="hTitle"></h1><div class="sub" id="hSub"></div></div></div>
+      <div class="treebox" id="treebox"><div class="tree" id="tree"></div></div>
+      <div class="foot" id="foot"></div>
+    </div>
+  </div></div>
+</div>
+
+<script src="/app-common.js"></script>
+<script>
+const app = new PrintApp('rodoslovnaya');
+const $ = (id) => document.getElementById(id);
+
+const PAPERS = { A4L: [297, 210, 'A4 landscape'], A4P: [210, 297, 'A4 portrait'], A3L: [420, 297, 'A3 landscape'], A3P: [297, 420, 'A3 portrait'] };
+const MM = 96 / 25.4;
+const TITLES = ['Хранитель ключей от дачи', 'Главный по борщу', 'Мастер семейных советов', 'Верховный дегустатор пирогов',
+  'Хранитель семейных фотоальбомов', 'Министр по вопросам чая', 'Директор семейных праздников', 'Главный по шашлыку',
+  'Мастер подарков не по размеру', 'Хранитель семейных легенд', 'Начальник отдела «А что на ужин?»', 'Главный по анекдотам'];
+
+const state = { surname: '', motto: '', theme: 'classic', paper: 'A4L', people: [] };
+let selected = null;
+let counter = 0;
+const newId = () => 'p' + Date.now().toString(36) + (counter++).toString(36);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const byId = (id) => state.people.find((p) => p.id === id);
+const birth = (p) => { const m = /\d{4}/.exec(p.years || ''); return m ? Number(m[0]) : 9999; };
+
+/* ---------------- раскладка дерева ---------------- */
+const CW = 160, CH = 76, SP = 26, GAP = 24, VGAP = 64;
+
+function layout(people) {
+  const map = new Map(people.map((p) => [p.id, p]));
+  const unitOf = new Map();
+  const units = [];
+  for (const p of people) {
+    if (unitOf.has(p.id)) continue;
+    const sp = p.spouse && map.get(p.spouse);
+    const members = [p];
+    if (sp && !unitOf.has(sp.id) && sp.spouse === p.id) members.push(sp);
+    const u = { members, children: [], parent: null, link: null };
+    members.forEach((m) => unitOf.set(m.id, u));
+    units.push(u);
+  }
+  // Первым ставим того, у кого есть родители в дереве
+  const hasParents = (m) => !!(unitOf.get(m.father) || unitOf.get(m.mother));
+  for (const u of units) if (u.members.length === 2 && !hasParents(u.members[0]) && hasParents(u.members[1])) u.members.reverse();
+
+  for (const u of units) {
+    for (const m of u.members) {
+      const pu = unitOf.get(m.father) || unitOf.get(m.mother);
+      if (pu && pu !== u) { u.parent = pu; u.link = m; break; }
+    }
+  }
+  // Разрываем возможные циклы
+  for (const u of units) {
+    let c = u, steps = 0;
+    while (c && c.parent) { c = c.parent; if (++steps > units.length) { u.parent = null; break; } }
+  }
+  for (const u of units) if (u.parent) u.parent.children.push(u);
+  const key = (u) => Math.min(...u.members.map(birth));
+  units.forEach((u) => u.children.sort((a, b) => key(a) - key(b)));
+
+  const measure = (u) => {
+    u.uw = u.members.length * CW + (u.members.length - 1) * SP;
+    const sum = u.children.reduce((s, c) => s + measure(c), 0) + GAP * Math.max(0, u.children.length - 1);
+    u.sub = Math.max(u.uw, sum);
+    u.childSum = sum;
+    return u.sub;
+  };
+  let maxDepth = 0;
+  const place = (u, left, depth) => {
+    maxDepth = Math.max(maxDepth, depth);
+    u.y = depth * (CH + VGAP);
+    u.x = left + (u.sub - u.uw) / 2;
+    let x = left + (u.sub - u.childSum) / 2;
+    for (const c of u.children) { place(c, x, depth + 1); x += c.sub + GAP; }
+  };
+  const roots = units.filter((u) => !u.parent).sort((a, b) => key(a) - key(b));
+  let x = 0;
+  roots.forEach((r) => { measure(r); place(r, x, 0); x += r.sub + GAP * 2; });
+  const width = Math.max(0, x - GAP * 2);
+  const height = roots.length ? (maxDepth + 1) * CH + maxDepth * VGAP : 0;
+  return { units, width, height };
+}
+
+function drawTree() {
+  const { units, width, height } = layout(state.people);
+  const tree = $('tree');
+  tree.style.width = width + 'px';
+  tree.style.height = height + 'px';
+  if (!units.length) { tree.innerHTML = ''; tree._size = [1, 1]; return; }
+
+  let lines = '';
+  const cardX = (u, m) => u.x + u.members.indexOf(m) * (CW + SP);
+  for (const u of units) {
+    if (u.members.length === 2) { // линия брака
+      const x1 = u.x + CW, x2 = u.x + CW + SP, y = u.y + CH / 2;
+      lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"/><text x="${(x1 + x2) / 2}" y="${y - 4}" text-anchor="middle" class="heart">♥</text>`;
+    }
+    if (!u.children.length) continue;
+    const ax = u.members.length === 2 ? u.x + CW + SP / 2 : u.x + CW / 2;
+    const ay = u.members.length === 2 ? u.y + CH / 2 : u.y + CH;
+    const bus = u.y + CH + VGAP / 2;
+    const xs = u.children.map((c) => cardX(c, c.link) + CW / 2);
+    lines += `<path d="M${ax} ${ay} V${bus}"/>`;
+    lines += `<path d="M${Math.min(ax, ...xs)} ${bus} H${Math.max(ax, ...xs)}"/>`;
+    u.children.forEach((c, i) => { lines += `<path d="M${xs[i]} ${bus} V${c.y}"/>`; });
+  }
+  let cards = '';
+  for (const u of units) {
+    u.members.forEach((m, i) => {
+      cards += `<div class="pcard" style="left:${u.x + i * (CW + SP)}px;top:${u.y}px">
+        <div class="n">${esc(m.name || 'Без имени')}</div>
+        ${m.years ? `<div class="y">${esc(m.years)}</div>` : ''}
+        ${m.title ? `<div class="t">${esc(m.title)}</div>` : ''}</div>`;
+    });
+  }
+  tree.innerHTML = `<svg width="${width}" height="${height}" fill="none" stroke="var(--c1)" stroke-width="2" stroke-linecap="round">${lines}</svg>
+    <style>.heart{fill:var(--c1);stroke:none;font-size:13px}</style>${cards}`;
+  tree._size = [width, height];
+}
+
+/* ---------------- герб ---------------- */
+function hash(s) { let h = 7; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; }
+function armsSvg(name) {
+  const clean = (name || 'род').trim();
+  const h = hash(clean.toLowerCase());
+  const pal = [['#1c3c8f', '#e8c04a'], ['#8a1c1c', '#f1e6c8'], ['#1d6b3a', '#f1e6c8'], ['#4a2a7a', '#e8c04a'], ['#2b2118', '#e8c04a'], ['#9a6b00', '#1c3c8f']];
+  const [a, b] = pal[h % pal.length];
+  const shape = 'M8 6 H92 V54 C92 80 70 94 50 104 C30 94 8 80 8 54 Z';
+  const pattern = [
+    `<rect x="50" y="0" width="60" height="120" fill="${b}"/>`,
+    `<rect x="0" y="0" width="100" height="40" fill="${b}"/>`,
+    `<polygon points="0,0 100,0 0,110" fill="${b}"/>`,
+    `<rect x="42" y="0" width="16" height="120" fill="${b}"/><rect x="0" y="38" width="100" height="16" fill="${b}"/>`,
+  ][(h >> 3) % 4];
+  const letter = clean.replace(/^[^A-Za-zА-Яа-яЁё]+/, '').charAt(0).toUpperCase() || '✦';
+  return `<svg viewBox="0 0 100 112" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="sh"><path d="${shape}"/></clipPath></defs>
+    <path d="${shape}" fill="${a}"/>
+    <g clip-path="url(#sh)">${pattern}</g>
+    <path d="${shape}" fill="none" stroke="#2b2118" stroke-width="3"/>
+    <circle cx="50" cy="50" r="22" fill="#fffaf0" stroke="#2b2118" stroke-width="2"/>
+    <text x="50" y="60" text-anchor="middle" font-family="Georgia, serif" font-size="30" font-weight="700" fill="${a}">${esc(letter)}</text>
+    <path d="M42 18 L46 10 L50 16 L54 10 L58 18 Z" fill="#e8c04a" stroke="#2b2118" stroke-width="1.5"/>
+  </svg>`;
+}
+
+/* ---------------- лист ---------------- */
+function renderSheet() {
+  const sheet = $('sheet');
+  sheet.className = 'sheet th-' + state.theme;
+  const [wmm, hmm, css] = PAPERS[state.paper];
+  sheet.style.width = wmm + 'mm';
+  sheet.style.height = hmm + 'mm';
+  $('pageStyle').textContent = `@page { size: ${css}; margin: 0; }`;
+
+  const surname = state.surname.trim();
+  $('hTitle').textContent = surname ? 'Род ' + surname : 'Родословная';
+  const years = state.people.map(birth).filter((y) => y < 9999);
+  $('hSub').textContent = state.motto.trim() || (years.length ? 'Древо семьи · с ' + Math.min(...years) + ' года' : 'Древо семьи');
+  $('arms').innerHTML = armsSvg(surname || 'Род');
+  $('foot').innerHTML = `Составлено ${new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}` +
+    (state.people.length ? ` · в древе <b>${state.people.length}</b> ${plural(state.people.length)}` : '');
+
+  drawTree();
+  fitTree();
+}
+function plural(n) { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'человек' : 'человек'; }
+
+// Вписываем дерево в свободное место на листе
+function fitTree() {
+  const box = $('treebox'), tree = $('tree');
+  const [tw, th] = tree._size || [1, 1];
+  const aw = box.clientWidth, ah = box.clientHeight;
+  const k = Math.min(aw / tw, ah / th, 1.5);
+  tree.style.transform = `scale(${k})`;
+  tree.style.left = (aw - tw * k) / 2 + 'px';
+  tree.style.top = Math.max(0, (ah - th * k) / 2) + 'px';
+  if (!state.people.length) tree.innerHTML = '';
+  let hint = box.querySelector('.emptyhint');
+  if (!state.people.length) {
+    if (!hint) { hint = document.createElement('div'); hint.className = 'emptyhint'; hint.textContent = 'Добавьте первого человека слева'; box.appendChild(hint); }
+  } else if (hint) hint.remove();
+  fitScreen();
+}
+
+// На экране уменьшаем лист по ширине окна
+function fitScreen() {
+  const stage = $('stage'), fitter = $('fitter'), sheet = $('sheet');
+  const [wmm, hmm] = PAPERS[state.paper];
+  const w = wmm * MM, h = hmm * MM;
+  const k = Math.min(1, (stage.clientWidth - 4) / w);
+  fitter.style.transform = `scale(${k})`;
+  fitter.style.width = w + 'px';
+  fitter.style.height = h * k + 'px';
+}
+window.addEventListener('resize', fitScreen);
+
+/* ---------------- редактор ---------------- */
+function descendants(id) {
+  const out = new Set();
+  const walk = (x) => state.people.forEach((p) => { if ((p.father === x || p.mother === x) && !out.has(p.id)) { out.add(p.id); walk(p.id); } });
+  walk(id);
+  return out;
+}
+
+function renderPeople() {
+  $('count').textContent = state.people.length;
+  $('people').innerHTML = state.people.map((p) =>
+    `<button class="pbtn ${p.id === selected ? 'on' : ''}" data-id="${p.id}" type="button">${esc(p.name || 'Без имени')} <small>${esc(p.years || '')}</small></button>`).join('')
+    || '<div style="color:var(--muted);font-size:13px">Пока никого нет</div>';
+}
+
+function renderEditor() {
+  const p = byId(selected);
+  $('editor').style.display = p ? 'block' : 'none';
+  if (!p) return;
+  const opt = (list, cur, emptyLabel) => `<option value="">${emptyLabel}</option>` +
+    list.map((x) => `<option value="${x.id}" ${x.id === cur ? 'selected' : ''}>${esc(x.name || 'Без имени')}</option>`).join('');
+  const bad = descendants(p.id); bad.add(p.id);
+  const parents = state.people.filter((x) => !bad.has(x.id));
+  $('f_name').value = p.name;
+  $('f_years').value = p.years;
+  $('f_title').value = p.title;
+  $('f_father').innerHTML = opt(parents, p.father, '— нет —');
+  $('f_mother').innerHTML = opt(parents, p.mother, '— нет —');
+  $('f_spouse').innerHTML = opt(state.people.filter((x) => x.id !== p.id), p.spouse, '— нет —');
+}
+
+function persist() { app.save(state); }
+function changed(full) { renderPeople(); if (full) renderEditor(); renderSheet(); persist(); }
+
+function setSpouse(p, newId_) {
+  // связь всегда взаимная
+  if (p.spouse) { const old = byId(p.spouse); if (old && old.spouse === p.id) old.spouse = ''; }
+  p.spouse = newId_ || '';
+  if (newId_) {
+    const o = byId(newId_);
+    if (o.spouse && o.spouse !== p.id) { const prev = byId(o.spouse); if (prev && prev.spouse === o.id) prev.spouse = ''; }
+    o.spouse = p.id;
+  }
+}
+
+$('people').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-id]');
+  if (b) { selected = b.dataset.id; renderPeople(); renderEditor(); }
+});
+$('add').onclick = () => {
+  const p = { id: newId(), name: '', years: '', title: '', father: '', mother: '', spouse: '' };
+  state.people.push(p);
+  selected = p.id;
+  changed(true);
+  $('f_name').focus();
+};
+$('del').onclick = () => {
+  const p = byId(selected);
+  if (!p || !confirm('Удалить «' + (p.name || 'без имени') + '» из древа?')) return;
+  state.people = state.people.filter((x) => x.id !== p.id);
+  state.people.forEach((x) => { if (x.father === p.id) x.father = ''; if (x.mother === p.id) x.mother = ''; if (x.spouse === p.id) x.spouse = ''; });
+  selected = null;
+  changed(true);
+};
+$('rnd').onclick = () => {
+  const p = byId(selected); if (!p) return;
+  p.title = TITLES[Math.floor(Math.random() * TITLES.length)];
+  $('f_title').value = p.title;
+  changed(false);
+};
+[['f_name', 'name'], ['f_years', 'years'], ['f_title', 'title']].forEach(([id, k]) => $(id).addEventListener('input', () => {
+  const p = byId(selected); if (!p) return;
+  p[k] = $(id).value;
+  changed(false);
+}));
+['father', 'mother'].forEach((k) => $('f_' + k).addEventListener('change', () => {
+  const p = byId(selected); if (!p) return;
+  p[k] = $('f_' + k).value;
+  changed(true);
+}));
+$('f_spouse').addEventListener('change', () => {
+  const p = byId(selected); if (!p) return;
+  setSpouse(p, $('f_spouse').value);
+  changed(true);
+});
+
+[['surname', 'surname'], ['motto', 'motto']].forEach(([id, k]) => $(id).addEventListener('input', () => { state[k] = $(id).value; renderSheet(); persist(); }));
+['theme', 'paper'].forEach((k) => $(k).addEventListener('change', () => { state[k] = $(k).value; renderSheet(); persist(); }));
+
+$('clear').onclick = () => {
+  if (!state.people.length || !confirm('Удалить всех людей из древа?')) return;
+  state.people = []; selected = null; changed(true);
+};
+$('demo').onclick = () => {
+  if (state.people.length && !confirm('Заменить текущее древо примером?')) return;
+  const mk = (name, years, title, extra) => Object.assign({ id: newId(), name, years, title, father: '', mother: '', spouse: '' }, extra || {});
+  const gf = mk('Пётр Андреевич', '1948', 'Хранитель ключей от дачи');
+  const gm = mk('Нина Павловна', '1951', 'Главная по борщу');
+  setSpouse(gf, ''); gf.spouse = gm.id; gm.spouse = gf.id;
+  const dad = mk('Сергей Петрович', '1975', 'Главный по шашлыку', { father: gf.id, mother: gm.id });
+  const mom = mk('Ольга Викторовна', '1977', 'Министр по вопросам чая');
+  dad.spouse = mom.id; mom.spouse = dad.id;
+  const aunt = mk('Марина Петровна', '1979', 'Мастер подарков не по размеру', { father: gf.id, mother: gm.id });
+  const me = mk('Алексей', '2002', 'Хранитель семейных легенд', { father: dad.id, mother: mom.id });
+  const sis = mk('Катя', '2006', 'Директор семейных праздников', { father: dad.id, mother: mom.id });
+  const cousin = mk('Игорь', '2004', 'Главный по анекдотам', { mother: aunt.id });
+  state.people = [gf, gm, dad, mom, aunt, me, sis, cousin];
+  state.surname = state.surname || 'Петровых';
+  selected = null;
+  toForm(); changed(true);
+};
+
+$('printBtn').onclick = () => window.print();
+
+function toForm() {
+  $('surname').value = state.surname; $('motto').value = state.motto;
+  $('theme').value = state.theme; $('paper').value = state.paper;
+}
+
+(async () => {
+  const saved = await app.load();
+  if (saved && Array.isArray(saved.people)) Object.assign(state, saved);
+  toForm();
+  renderPeople(); renderEditor(); renderSheet();
+  // Шрифты/размеры устаканились — подгоняем ещё раз
+  setTimeout(fitTree, 150);
+})();
+</script>
+</body>
+</html>

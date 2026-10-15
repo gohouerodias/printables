@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Распечатай это — бесполезные штуки для печати</title>
+<meta name="description" content="Шуточные справки, книжки купонов и родословная для печати. Каждое приложение — 199 ₽ в месяц.">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="/">Распечатай<span>это</span></a>
+    <nav id="nav"><a href="/login.html">Войти</a></nav>
+  </div>
+</header>
+<marquee scrollamount="4">★ Добро пожаловать на сайт «Распечатай-это»! ★ Печатайте, дарите, радуйтесь! ★ Три приложения — по 199 рублей в месяц каждое ★</marquee>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Бесполезные штуки,<br>которые приятно распечатать</h1>
+    <p>Три маленьких приложения: заполните форму, нажмите «Печать» — и получите готовый лист А4. Без лишнего. Просто красиво и с юмором.</p>
+  </section>
+
+  <section class="grid" id="apps">
+    <article class="card">
+      <div class="emoji">📜</div>
+      <h2>Справки о важном <span class="new">НОВОЕ!</span></h2>
+      <p>Шуточные справки, грамоты и «штрафы» с печатью: «Справка о том, что Иван действительно устал». Для друзей, коллег и подарков.</p>
+      <div class="price">199 ₽ <small>/ месяц</small></div>
+      <a class="btn" href="/app/spravki">Открыть</a>
+    </article>
+    <article class="card">
+      <div class="emoji">🎟️</div>
+      <h2>Книжка купонов <span class="new">НОВОЕ!</span></h2>
+      <p>Купоны «один обед от меня», «выбираешь фильм ты», «обнимашки без лимита». Готовые наборы к 8 Марта, 23 Февраля, Новому году и дню рождения.</p>
+      <div class="price">199 ₽ <small>/ месяц</small></div>
+      <a class="btn" href="/app/kupony">Открыть</a>
+    </article>
+    <article class="card">
+      <div class="emoji">🌳</div>
+      <h2>Родословная <span class="new">НОВОЕ!</span></h2>
+      <p>Внесите родных, добавьте шуточные титулы («Хранитель ключей от дачи») — получите красивое древо с гербом рода на печать.</p>
+      <div class="price">199 ₽ <small>/ месяц</small></div>
+      <a class="btn" href="/app/rodoslovnaya">Открыть</a>
+    </article>
+  </section>
+
+  <section style="text-align:center;padding-bottom:40px;color:var(--muted)">
+    Каждое приложение оплачивается отдельно, 199 ₽ за 30 дней. Автопродление можно отключить в любой момент в личном кабинете.
+  </section>
+</main>
+
+<footer>
+  <div style="margin-bottom:8px"><span class="b88 a">Сделано<br>в Блокноте</span><span class="b88 b">Internet<br>Explorer 5.0</span><span class="b88 c">800 × 600<br>256 цветов</span></div>
+  <a href="/offer.html">Публичная оферта</a>
+  <a href="/privacy.html">Политика конфиденциальности</a>
+</footer>
+
+<script>
+fetch('/api/me').then(r => r.json()).then(d => {
+  if (d.user) document.getElementById('nav').innerHTML = '<a href="/account.html">Личный кабинет</a>';
+}).catch(() => {});
+</script>
+</body>
+</html>

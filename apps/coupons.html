@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Книжка купонов</title>
+<style>
+  :root { --bg:#f3ede1; --ink:#2b2118; --muted:#7a6a5a; --line:#e0d4bf; --card:#fffdf8; --accent:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", system-ui, Roboto, Arial, sans-serif; }
+  .bar { display:flex; gap:12px; align-items:center; padding:10px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  .bar a { color:var(--ink); font-weight:600; text-decoration:none; }
+  .bar .sp { flex:1; }
+  #saveStatus { color:var(--muted); font-size:13px; }
+  .btn { border:0; border-radius:9px; padding:9px 16px; font:inherit; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .btn.small { padding:5px 10px; font-size:13px; }
+  .layout { display:grid; grid-template-columns: 360px 1fr; gap:20px; padding:20px; align-items:start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .form { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .form label { display:block; font-weight:600; font-size:13px; margin:12px 0 4px; }
+  .form input, .form select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .list { margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:360px; overflow:auto; padding-right:2px; }
+  .item { display:grid; grid-template-columns: 52px 1fr 30px; gap:6px; }
+  .item input { padding:6px 8px; }
+  .item .emo { text-align:center; }
+  .item .del { border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; color:var(--muted); }
+  .stage { display:flex; flex-direction:column; gap:20px; align-items:center; overflow:auto; }
+
+  /* ----- лист А4: 2 колонки x 4 ряда ----- */
+  .scaler { transform-origin: top center; }
+  .page { width:210mm; height:297mm; background:#fff; padding:9mm 10mm; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4, 1fr); gap:0; position:relative; box-shadow:0 10px 40px -14px rgba(60,40,10,.4); }
+  .cut { border:.3mm dashed #aaa; margin:-.15mm; padding:2.2mm; display:flex; }
+  .coupon { flex:1; display:flex; border:.5mm solid var(--c); border-radius:3mm; overflow:hidden; background: var(--bgc); position:relative; }
+  .stub { width:21mm; border-right:.6mm dashed var(--c); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1mm; background:var(--c); color:#fff; text-align:center; font-size:7pt; letter-spacing:.1em; text-transform:uppercase; }
+  .stub .e { font-size:24pt; line-height:1; letter-spacing:0; }
+  .main { flex:1; padding:3mm 4mm; display:flex; flex-direction:column; justify-content:space-between; text-align:center; min-width:0; }
+  .kicker { font-size:7.5pt; letter-spacing:.22em; text-transform:uppercase; color:var(--c); font-weight:700; }
+  .ctext { font-family:Georgia, "Times New Roman", serif; font-size:14.5pt; line-height:1.18; font-weight:700; color:#222; display:flex; align-items:center; justify-content:center; flex:1; padding:1mm 0; overflow:hidden; }
+  .cfoot { font-size:7.5pt; color:#555; display:flex; justify-content:space-between; gap:2mm; border-top:.3mm solid color-mix(in srgb, var(--c) 40%, white); padding-top:1.4mm; }
+  .cfoot span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .empty { border:none; }
+  .empty .coupon { display:none; }
+  .legend { position:absolute; bottom:3mm; left:0; right:0; text-align:center; font-size:7pt; color:#999; }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background:#fff; }
+    .bar, .form { display:none !important; }
+    .layout { display:block; padding:0; }
+    .stage { display:block; overflow:visible; gap:0; }
+    .scaler { transform:none !important; height:auto !important; width:auto !important; }
+    .page { box-shadow:none; break-after:page; page-break-after:always; }
+    .page:last-child { break-after:auto; page-break-after:auto; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+<link rel="stylesheet" href="/app-retro.css">
+</head>
+<body>
+<div class="bar">
+  <a href="/account.html">← Кабинет</a>
+  <span class="sp"></span>
+  <span id="saveStatus"></span>
+  <button class="btn" id="printBtn" type="button">Печать / PDF</button>
+</div>
+
+<div class="layout">
+  <div class="form">
+    <label for="theme">Набор купонов</label>
+    <select id="theme"></select>
+
+    <div class="two">
+      <div><label for="from">От кого</label><input id="from" type="text" maxlength="24" placeholder="Аня"></div>
+      <div><label for="to">Кому</label><input id="to" type="text" maxlength="24" placeholder="Максиму"></div>
+    </div>
+
+    <div class="two">
+      <div><label for="valid">Срок действия</label><input id="valid" type="text" maxlength="24" placeholder="весь 2026 год"></div>
+      <div><label for="color">Цвет</label>
+        <select id="color">
+          <option value="#b3261e">Красный</option>
+          <option value="#1c3c8f">Синий</option>
+          <option value="#1d6b3a">Зелёный</option>
+          <option value="#9a6b00">Золотой</option>
+          <option value="#7a2a7a">Сиреневый</option>
+          <option value="#c2410c">Оранжевый</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Купоны (<span id="count">0</span>, по 8 на лист)</label>
+    <div class="list" id="list"></div>
+    <div class="two" style="margin-top:10px">
+      <button class="btn ghost small" id="add" type="button">+ Добавить купон</button>
+      <button class="btn ghost small" id="reset" type="button">Сбросить набор</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage"><div class="scaler" id="scaler"><div id="pages" style="display:flex;flex-direction:column;gap:20px"></div></div></div>
+</div>
+
+<script src="/app-common.js"></script>
+<script>
+const app = new PrintApp('kupony');
+const $ = (id) => document.getElementById(id);
+
+const THEMES = {
+  love: { name: '💞 Для пары', emoji: '💞', items: [
+    ['🤗', 'Обнимашки без лимита'], ['🍳', 'Завтрак в постель'], ['🎬', 'Ты выбираешь фильм'], ['💆', 'Массаж на 15 минут'],
+    ['🧽', 'Я мою посуду сегодня'], ['📵', 'Вечер без телефонов'], ['🌧️', 'Прогулка в любую погоду'], ['⭐', 'Любое желание (в разумных пределах)'] ] },
+  friends: { name: '🤝 Для друга', emoji: '🤝', items: [
+    ['☕', 'Один кофе за мой счёт'], ['📦', 'Помогу с переездом'], ['👂', 'Выслушаю без советов'], ['🚗', 'Подвезу в любое время'],
+    ['🍕', 'Ужин — угощаю я'], ['⏰', 'Прощу одно опоздание'], ['🎮', 'Ты выбираешь игру'], ['🙌', 'Один раз скажу «ты был прав»'] ] },
+  family: { name: '🏠 Для родителей', emoji: '🏠', items: [
+    ['🧹', 'Генеральная уборка от меня'], ['📞', 'Позвоню просто так'], ['🍲', 'Приготовлю ужин'], ['🌿', 'Помогу на даче'],
+    ['📱', 'Объясню, как работает смартфон'], ['🚶', 'Прогулка вдвоём'], ['🎁', 'Сюрприз без повода'], ['❤️', 'Скажу, как вас люблю'] ] },
+  mar8: { name: '🌷 8 Марта', emoji: '🌷', items: [
+    ['🌷', 'Цветы — без напоминаний'], ['🍰', 'Любимый десерт'], ['🛋️', 'Выходной от всех дел'], ['🍷', 'Ужин при свечах'],
+    ['👗', 'Поход за покупками, я несу пакеты'], ['💐', 'Букет на любой повод'], ['🎶', 'Танец на кухне'], ['👑', 'Весь день — королева'] ] },
+  feb23: { name: '🎖️ 23 Февраля', emoji: '🎖️', items: [
+    ['🎖️', 'Звание «Лучший защитник»'], ['🍖', 'Любимый ужин по заказу'], ['🎮', '2 часа игр без упрёков'], ['🛋️', 'Диван — только твой'],
+    ['⚽', 'Матч без комментариев'], ['🍺', 'Вечер с друзьями'], ['🔧', 'Я помогаю с гаражом'], ['😴', 'Выходной на диване'] ] },
+  ny: { name: '🎄 Новый год', emoji: '🎄', items: [
+    ['🎄', 'Нарядим ёлку вместе'], ['🍊', 'Мандарины на всё утро'], ['🎁', 'Подарок от Деда Мороза'], ['🥂', 'Первый тост — твой'],
+    ['⛄', 'Лепим снеговика'], ['🎬', 'Новогодний марафон фильмов'], ['❄️', 'Прогулка по снегу'], ['✨', 'Загадай желание — исполню'] ] },
+  bday: { name: '🎂 День рождения', emoji: '🎂', items: [
+    ['🎂', 'Торт — твой любимый'], ['🎁', 'Подарок без оглядки на цену'], ['🎉', 'Вечеринка в твоём стиле'], ['👑', 'Весь день — ты главный'],
+    ['🍽️', 'Ужин в ресторане'], ['📸', 'Фотосессия на память'], ['😴', 'Поспать допоздна'], ['⭐', 'Любое желание (в пределах бюджета)'] ] },
+};
+
+const state = { theme: 'love', from: '', to: '', valid: 'бессрочно', color: '#b3261e', items: [] };
+let edited = false;
+
+$('theme').innerHTML = Object.entries(THEMES).map(([k, t]) => `<option value="${k}">${t.name}</option>`).join('');
+
+function loadTheme(k) {
+  state.theme = k;
+  state.items = THEMES[k].items.map(([e, t]) => ({ e, t }));
+  edited = false;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function toForm() {
+  ['theme', 'from', 'to', 'valid', 'color'].forEach((k) => { $(k).value = state[k]; });
+  $('count').textContent = state.items.length;
+  $('list').innerHTML = state.items.map((it, i) => `
+    <div class="item">
+      <input class="emo" data-i="${i}" data-f="e" value="${esc(it.e)}" maxlength="4" aria-label="Значок">
+      <input data-i="${i}" data-f="t" value="${esc(it.t)}" maxlength="70" aria-label="Текст купона">
+      <button class="del" data-del="${i}" type="button" aria-label="Удалить">✕</button>
+    </div>`).join('');
+}
+
+function couponHtml(it) {
+  return `<div class="cut"><div class="coupon" style="--c:${state.color};--bgc:color-mix(in srgb, ${state.color} 5%, white)">
+    <div class="stub"><div class="e">${esc(it.e)}</div><div>купон</div></div>
+    <div class="main">
+      <div class="kicker">${state.to ? 'для ' + esc(state.to) : 'Купон'}</div>
+      <div class="ctext">${esc(it.t)}</div>
+      <div class="cfoot"><span>${state.from ? 'от ' + esc(state.from) : ''}</span><span>${esc(state.valid)}</span></div>
+    </div></div></div>`;
+}
+
+function render() {
+  const pages = [];
+  for (let i = 0; i < state.items.length || i === 0; i += 8) {
+    const chunk = state.items.slice(i, i + 8);
+    let cells = chunk.map(couponHtml).join('');
+    for (let j = chunk.length; j < 8; j++) cells += '<div class="cut empty"></div>';
+    pages.push(`<div class="page">${cells}<div class="legend">Купон действителен при предъявлении · отрывается по пунктиру</div></div>`);
+  }
+  $('pages').innerHTML = pages.join('');
+  fit();
+}
+
+function fit() {
+  const stage = $('stage'), scaler = $('scaler'), pg = $('pages');
+  scaler.style.transform = 'none';
+  const w = 210 * 3.7795; // 210мм в пикселях
+  const k = Math.min(1, (stage.clientWidth - 4) / w);
+  scaler.style.transform = `scale(${k})`;
+  scaler.style.width = w + 'px';
+  scaler.style.height = pg.offsetHeight * k + 'px';
+}
+window.addEventListener('resize', fit);
+
+function persist() { app.save({ state, edited }); }
+function refresh() { toForm(); render(); persist(); }
+
+$('theme').addEventListener('change', () => {
+  if (edited && !confirm('Заменить ваши правки купонов выбранным набором?')) { $('theme').value = state.theme; return; }
+  loadTheme($('theme').value);
+  refresh();
+});
+['from', 'to', 'valid', 'color'].forEach((k) => $(k).addEventListener('input', () => { state[k] = $(k).value; render(); persist(); }));
+
+$('list').addEventListener('input', (e) => {
+  const i = e.target.dataset.i;
+  if (i === undefined) return;
+  state.items[i][e.target.dataset.f] = e.target.value;
+  edited = true;
+  render(); persist();
+});
+$('list').addEventListener('click', (e) => {
+  const d = e.target.closest('[data-del]');
+  if (!d) return;
+  state.items.splice(Number(d.dataset.del), 1);
+  edited = true;
+  refresh();
+});
+$('add').onclick = () => {
+  state.items.push({ e: THEMES[state.theme].emoji, t: 'Новый купон' });
+  edited = true;
+  refresh();
+  const inputs = $('list').querySelectorAll('input[data-f="t"]');
+  const last = inputs[inputs.length - 1]; last.focus(); last.select();
+};
+$('reset').onclick = () => {
+  if (confirm('Вернуть исходный набор «' + THEMES[state.theme].name.replace(/^\S+\s/, '') + '»?')) { loadTheme(state.theme); refresh(); }
+};
+$('printBtn').onclick = () => window.print();
+
+(async () => {
+  const saved = await app.load();
+  if (saved && saved.state && Array.isArray(saved.state.items) && THEMES[saved.state.theme]) {
+    Object.assign(state, saved.state);
+    edited = !!saved.edited;
+  } else {
+    loadTheme('love');
+  }
+  toForm(); render();
+})();
+</script>
+</body>
+</html>

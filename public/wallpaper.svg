@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="160" viewBox="0 0 120 160">
+  <!-- Советские обои: охра, коричневые розетки, зелёные листья, тонкие вертикальные полосы -->
+  <defs>
+    <g id="flower">
+      <g fill="#8a5a2b" stroke="#5e3d1c" stroke-width="1">
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(45)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(90)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(135)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(180)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(225)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(270)"/>
+        <ellipse cx="0" cy="-14" rx="5.5" ry="12" transform="rotate(315)"/>
+      </g>
+      <circle r="9" fill="#ead9a0" stroke="#5e3d1c" stroke-width="1"/>
+      <circle r="4" fill="#a8452a"/>
+      <g fill="#5f6f2e" stroke="#3f4b1d" stroke-width="1">
+        <path d="M0 30 C-16 34 -26 46 -24 58 C-12 54 -2 44 0 30 Z"/>
+        <path d="M0 30 C16 34 26 46 24 58 C12 54 2 44 0 30 Z"/>
+      </g>
+    </g>
+    <g id="gem">
+      <path d="M0 -7 L5 0 L0 7 L-5 0 Z" fill="#a8452a" stroke="#5e3d1c" stroke-width="1"/>
+      <circle r="1.6" fill="#ead9a0"/>
+    </g>
+  </defs>
+  <rect width="120" height="160" fill="#cdb26f"/>
+  <rect x="29" width="3" height="160" fill="#b99c55"/>
+  <rect x="89" width="3" height="160" fill="#b99c55"/>
+  <use href="#flower" x="60" y="40"/>
+  <use href="#flower" x="0" y="120"/>
+  <use href="#flower" x="120" y="120"/>
+  <use href="#flower" x="0" y="-40"/>
+  <use href="#flower" x="120" y="-40"/>
+  <use href="#gem" x="60" y="120"/>
+  <use href="#gem" x="0" y="40"/>
+  <use href="#gem" x="120" y="40"/>
+</svg>

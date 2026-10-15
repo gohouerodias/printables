@@ -1,0 +1,203 @@
+/* Тема «Рунет, 1999»: серые окна Windows 98, синий заголовок, объёмные кнопки */
+:root {
+  --bg: #5f8fa8;
+  --ink: #000;
+  --muted: #444;
+  --line: #808080;
+  --card: #c0c0c0;
+  --accent: #cc0000;
+  --accent-ink: #fff;
+  --gold: #ffff00;
+  --radius: 0;
+  --navy: #000080;
+  --blue: #1084d0;
+  --gray: #c0c0c0;
+  --cream: #fffff0;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  color: #000;
+  font: 16px/1.4 "Times New Roman", Times, serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #cdb26f;
+  background-image: url("/wallpaper.svg");
+}
+a:link { color: #0000ee; }
+a:visited { color: #551a8b; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+/* ---------- шапка ---------- */
+header.top {
+  background: linear-gradient(90deg, var(--navy), var(--blue));
+  border-bottom: 3px ridge #fff;
+}
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 6px 20px; }
+header.top .logo:link, header.top .logo:visited {
+  font: 900 24px "Arial Black", Impact, Arial, sans-serif;
+  color: #ffff00;
+  text-decoration: none;
+  text-shadow: 2px 2px 0 #000;
+}
+header.top .logo span { color: #ff5050; }
+header.top nav a:link, header.top nav a:visited { margin-left: 14px; color: #fff; font: bold 15px Arial, sans-serif; }
+
+/* бегущая строка */
+marquee {
+  display: block;
+  background: var(--navy);
+  color: #ffff00;
+  font: bold 15px "Courier New", monospace;
+  padding: 3px 0;
+  border-top: 2px solid #fff;
+  border-bottom: 2px solid #000;
+}
+@media (prefers-reduced-motion: reduce) { marquee { display: none; } }
+
+/* ---------- «бумага» страницы ---------- */
+main.wrap {
+  width: 100%;
+  background: var(--cream);
+  border: 3px ridge #fff;
+  margin: 14px auto;
+  padding: 14px 20px 24px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.45);
+}
+@media (max-width: 1040px) { main.wrap { margin: 10px 8px; width: auto; } }
+
+.hero { padding: 18px 0 8px; text-align: center; }
+.hero h1 {
+  font: 900 clamp(26px, 5vw, 40px)/1.15 "Arial Black", Impact, Arial, sans-serif;
+  color: var(--navy);
+  margin: 0 0 10px;
+  text-shadow: 2px 2px 0 #ffff00;
+}
+.hero p { font-size: 18px; max-width: 640px; margin: 0 auto; color: #222; }
+.hero::after { content: ""; display: block; height: 0; border-top: 2px groove #888; margin: 20px auto 0; }
+
+/* ---------- окошки ---------- */
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); padding: 16px 0 24px; }
+.card {
+  background: var(--gray);
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  padding: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card > * { margin: 0 12px; }
+.card h2 {
+  order: -1;
+  margin: 2px 2px 0;
+  padding: 3px 8px;
+  background: linear-gradient(90deg, var(--navy), var(--blue));
+  color: #fff;
+  font: bold 16px Arial, sans-serif;
+}
+.card .emoji { font-size: 34px; line-height: 1.1; text-align: center; margin-top: 6px; }
+.card p { flex: 1; font-size: 15px; color: #111; }
+.price { font: bold 20px Arial, sans-serif; color: var(--accent); }
+.price small { font: 12px Arial, sans-serif; color: #333; }
+
+.new {
+  margin-left: 6px; padding: 0 4px;
+  background: #ffff00; color: #ff0000;
+  font: bold 11px Arial, sans-serif;
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .new { animation: none; } }
+
+/* ---------- кнопки ---------- */
+.btn {
+  display: inline-block;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-radius: 0;
+  padding: 5px 14px;
+  font: bold 14px Arial, sans-serif;
+  background: var(--gray);
+  color: #000;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: inset -1px -1px #808080;
+}
+.btn:hover { background: #d8d8d8; }
+.btn:active { border-color: #404040 #fff #fff #404040; box-shadow: inset 1px 1px #808080; padding: 6px 13px 4px 15px; }
+.btn.ghost { font-weight: normal; }
+a.btn:link, a.btn:visited { color: var(--navy); text-decoration: none; }
+.btn[disabled] { color: #808080; text-shadow: 1px 1px #fff; cursor: default; }
+
+/* ---------- формы ---------- */
+.panel { max-width: 420px; margin: 30px auto; }
+.panel.card > * { margin: 0; }
+.panel.card > h1 {
+  margin: -28px -28px 18px;
+  padding: 4px 8px;
+  background: linear-gradient(90deg, var(--navy), var(--blue));
+  color: #fff;
+  font: bold 16px Arial, sans-serif;
+}
+label { display: block; font: bold 13px Arial, sans-serif; margin: 12px 0 4px; }
+input[type=email], input[type=password], input[type=text] {
+  width: 100%;
+  padding: 5px 6px;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  border-radius: 0;
+  font: 14px Arial, sans-serif;
+  background: #fff;
+}
+.msg { margin-top: 14px; color: #cc0000; min-height: 1.3em; font: bold 13px Arial, sans-serif; }
+.notice {
+  background: #ffffe1;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 0 #808080;
+  padding: 8px 12px;
+  margin-bottom: 18px;
+  font: 14px Arial, sans-serif;
+}
+.tag { display: inline-block; padding: 1px 8px; font: bold 12px Arial, sans-serif; border: 1px solid #000; }
+.tag.on { background: #90ee90; color: #000; }
+.tag.off { background: #e0e0e0; color: #333; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- подвал ---------- */
+footer {
+  margin: auto 0 0;
+  padding: 14px 20px 30px;
+  background: linear-gradient(#8a5a2b, #4a2e14);
+  border-top: 5px ridge #c8a06a;
+  text-align: center;
+  font: 13px Arial, sans-serif;
+  color: #fff;
+}
+footer a:link, footer a:visited { color: #ffff66; margin: 0 8px; }
+footer::after {
+  content: "Лучше всего смотрится в Internet Explorer 5.0 · разрешение 800×600 · 256 цветов";
+  display: block;
+  margin-top: 10px;
+  color: #dfe9f0;
+}
+.b88 {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 88px; height: 31px; margin: 3px;
+  border: 1px solid #000;
+  font: bold 10px/1.1 Arial, sans-serif;
+  text-align: center; color: #fff; text-shadow: 1px 1px #000;
+  vertical-align: middle;
+}
+.b88.a { background: linear-gradient(#e84040, #800000); }
+.b88.b { background: linear-gradient(#4090e8, #000080); }
+.b88.c { background: linear-gradient(#40b040, #004000); }
+
+/* ---------- оферта и политика ---------- */
+.legal { padding-bottom: 24px; }
+.legal h1 { margin: 6px 0 14px; font: bold 26px Arial, sans-serif; color: var(--navy); }
+.legal h3 { margin: 18px 0 4px; font: bold 16px Arial, sans-serif; color: var(--navy); }

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Справки о важном</title>
+<style>
+  :root { --bg:#f3ede1; --ink:#2b2118; --muted:#7a6a5a; --line:#e0d4bf; --card:#fffdf8; --accent:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", system-ui, Roboto, Arial, sans-serif; }
+  .bar { display:flex; gap:12px; align-items:center; padding:10px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  .bar a { color:var(--ink); font-weight:600; text-decoration:none; }
+  .bar .sp { flex:1; }
+  #saveStatus { color:var(--muted); font-size:13px; }
+  .btn { border:0; border-radius:9px; padding:9px 16px; font:inherit; font-weight:700; background:var(--accent); color:#fff; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .layout { display:grid; grid-template-columns: 340px 1fr; gap:20px; padding:20px; align-items:start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .form { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .form label { display:block; font-weight:600; font-size:13px; margin:12px 0 4px; }
+  .form input, .form select, .form textarea { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  .form textarea { min-height:70px; resize:vertical; }
+  .form .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .warn { background:#fde8e6; border:1px solid #f1b5b0; color:#8c1d16; padding:9px 11px; border-radius:8px; margin-top:12px; display:none; font-size:13px; }
+  .hint { color:var(--muted); font-size:12px; margin-top:4px; }
+  .stage { overflow:auto; display:flex; justify-content:center; }
+  .scaler { transform-origin: top center; }
+
+  /* ----- лист А4 ----- */
+  .sheet { width:210mm; height:297mm; background:#fff; position:relative; box-shadow:0 10px 40px -14px rgba(60,40,10,.4); overflow:hidden; padding:14mm; }
+  .frame { position:absolute; inset:9mm; border:2.2mm double var(--c); }
+  .frame::before { content:""; position:absolute; inset:2.4mm; border:.4mm solid var(--c); }
+  .doc { position:relative; height:100%; display:flex; flex-direction:column; align-items:center; padding:14mm 14mm 10mm; text-align:center; color:#222; font-family:Georgia, "Times New Roman", serif; }
+  .org { font-size:13pt; letter-spacing:.14em; text-transform:uppercase; color:var(--c); font-weight:700; }
+  .orgsub { font-size:9.5pt; font-style:italic; color:#666; margin-top:1.5mm; }
+  .orn { width:70mm; height:0; border-top:.5mm solid var(--c); margin:7mm auto 6mm; position:relative; }
+  .orn::after { content:"✦"; position:absolute; left:50%; top:-3.6mm; transform:translateX(-50%); background:#fff; padding:0 3mm; color:var(--c); font-size:13pt; }
+  .dtitle { font-size:40pt; letter-spacing:.12em; font-weight:700; color:var(--c); margin:0; line-height:1.1; }
+  .dnum { font-size:11pt; color:#555; margin-top:3mm; }
+  .body { margin-top:14mm; font-size:17pt; line-height:1.6; max-width:150mm; }
+  .body .who { display:block; font-size:25pt; font-weight:700; margin:4mm 0; border-bottom:.4mm solid #bbb; padding:0 4mm 1mm; }
+  .body .extra { display:block; margin-top:5mm; font-size:14pt; font-style:italic; color:#444; }
+  .spacer { flex:1; }
+  .sign { width:100%; display:flex; justify-content:space-between; align-items:flex-end; font-size:11.5pt; padding:0 6mm; }
+  .sign .l { text-align:left; }
+  .sign .line { display:inline-block; width:46mm; border-bottom:.35mm solid #222; margin-bottom:1mm; height:9mm; position:relative; }
+  .sign .scrawl { position:absolute; left:2mm; bottom:-1mm; font:italic 22pt "Brush Script MT","Segoe Script","Lucida Handwriting",cursive; color:#1c3c8f; transform:rotate(-4deg); white-space:nowrap; }
+  .stamp { position:absolute; width:46mm; height:46mm; right:34mm; bottom:34mm; opacity:.82; transform:rotate(-14deg); mix-blend-mode:multiply; }
+  .joke { margin-top:6mm; font-family:"Segoe UI",Arial,sans-serif; font-size:8.5pt; color:#8a8a8a; letter-spacing:.02em; }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background:#fff; }
+    .bar, .form, .warn { display:none !important; }
+    .layout { display:block; padding:0; }
+    .stage { display:block; overflow:visible; }
+    .scaler { transform:none !important; height:auto !important; }
+    .sheet { box-shadow:none; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+<link rel="stylesheet" href="/app-retro.css">
+</head>
+<body>
+<div class="bar">
+  <a href="/account.html">← Кабинет</a>
+  <span class="sp"></span>
+  <span id="saveStatus"></span>
+  <button class="btn" id="printBtn" type="button">Печать / PDF</button>
+</div>
+
+<div class="layout">
+  <div class="form">
+    <label for="type">Вид документа</label>
+    <select id="type"></select>
+
+    <label for="who">Кому выдан (ФИО или имя)</label>
+    <input id="who" type="text" maxlength="60" placeholder="Иван Петрович Сидоров">
+
+    <label for="reason" id="reasonLabel">Что подтверждается</label>
+    <textarea id="reason" maxlength="220"></textarea>
+
+    <div id="amountRow" style="display:none">
+      <div class="two">
+        <div><label for="amount">Размер штрафа</label><input id="amount" type="text" maxlength="6" value="3"></div>
+        <div><label for="unit">Единица</label><input id="unit" type="text" maxlength="24" value="чашки кофе"></div>
+      </div>
+    </div>
+
+    <label for="extra">Приписка внизу (необязательно)</label>
+    <input id="extra" type="text" maxlength="110" placeholder="Действительна до выходных">
+
+    <label for="org">Выдавший орган (вымышленный)</label>
+    <input id="org" type="text" maxlength="48">
+    <div class="hint">Только вымышленные названия. Названия настоящих госорганов использовать нельзя.</div>
+
+    <div class="two">
+      <div><label for="role">Должность</label><input id="role" type="text" maxlength="30" placeholder="Главный по делам"></div>
+      <div><label for="signer">Подпись (имя)</label><input id="signer" type="text" maxlength="24" placeholder="Анна"></div>
+    </div>
+
+    <div class="two">
+      <div><label for="date">Дата</label><input id="date" type="date"></div>
+      <div><label for="color">Цвет</label>
+        <select id="color">
+          <option value="#1c3c8f">Синий</option>
+          <option value="#8a1c1c">Бордовый</option>
+          <option value="#1d6b3a">Зелёный</option>
+          <option value="#9a6b00">Золотой</option>
+          <option value="#4a2a7a">Фиолетовый</option>
+        </select>
+      </div>
+    </div>
+    <div class="warn" id="warn"></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="scaler" id="scaler">
+      <div class="sheet" id="sheet" style="--c:#1c3c8f">
+        <div class="frame"></div>
+        <div class="doc">
+          <div class="org" id="pOrg"></div>
+          <div class="orgsub" id="pOrgSub">учреждение, которого не существует</div>
+          <div class="orn"></div>
+          <h1 class="dtitle" id="pTitle"></h1>
+          <div class="dnum" id="pNum"></div>
+          <div class="body" id="pBody"></div>
+          <div class="spacer"></div>
+          <div class="sign">
+            <div class="l"><div id="pRole"></div><div id="pDate"></div></div>
+            <div><span class="line"><span class="scrawl" id="pScrawl"></span></span><div id="pSigner"></div></div>
+          </div>
+          <svg class="stamp" id="stamp" viewBox="0 0 200 200"></svg>
+          <div class="joke">Шуточный документ · не имеет юридической силы · сделано для развлечения</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/app-common.js"></script>
+<script>
+const app = new PrintApp('spravki');
+const $ = (id) => document.getElementById(id);
+
+// Все организации и должности — вымышленные
+const TYPES = {
+  spravka: { name: 'Справка', title: 'СПРАВКА', org: 'Бюро Особо Бесполезных Справок', reasonLabel: 'Что подтверждается',
+    reason: 'действительно очень устал(а) и имеет полное право на чай, плед и тишину', prefix: 'Дана', mid: 'в том, что', letter: 'С' },
+  gramota: { name: 'Грамота', title: 'ГРАМОТА', org: 'Академия Великих Достижений', reasonLabel: 'За что награждается',
+    reason: 'выдающиеся успехи в искусстве откладывать всё на завтра', prefix: 'Награждается', mid: 'за', letter: 'Г' },
+  shtraf: { name: 'Квитанция о штрафе', title: 'ШТРАФ', org: 'Комитет по Мелким Нарушениям', reasonLabel: 'За что штраф',
+    reason: 'опоздание на встречу более чем на пять минут', prefix: 'Гражданин(ка)', mid: 'оштрафован(а) за', letter: 'Ш', amount: true },
+  udost: { name: 'Удостоверение', title: 'УДОСТОВЕРЕНИЕ', org: 'Союз Хранителей Домашнего Уюта', reasonLabel: 'Кем является',
+    reason: 'Хранителем ключей от дачи, обладателем права голоса на семейных советах', prefix: 'Предъявитель сего', mid: 'является', letter: 'У' },
+  propusk: { name: 'Пропуск', title: 'ПРОПУСК', org: 'Служба Допуска на Вкусное', reasonLabel: 'Куда допускается',
+    reason: 'на кухню в любое время суток, включая ночные рейды к холодильнику', prefix: 'Предъявитель', mid: 'допускается', letter: 'П' },
+};
+// Не даём имитировать настоящие органы власти и организации
+const REAL_ORG = /(мвд|фнс|фсб|фсин|гибдд|гаи|мчс|минздрав|минфин|мид\b|минобр|минюст|правительств|президент|администрац|росреестр|росфин|роспотреб|ростех|налогов|пенсионн|соцзащит|полици|прокуратур|следственн|суд\b|судебн|мфц|госуслуг|загс|паспортн|военкомат|сбербанк|тинькофф|т-банк|втб|альфа-банк)/i;
+
+const state = {
+  type: 'spravka', who: '', reason: '', amount: '3', unit: 'чашки кофе', extra: '',
+  org: '', role: 'Главный по делам', signer: '', date: '', color: '#1c3c8f', n: 0,
+};
+const touched = {}; // поля, которые пользователь менял сам
+
+$('type').innerHTML = Object.entries(TYPES).map(([k, t]) => `<option value="${k}">${t.name}</option>`).join('');
+
+function today() { return new Date().toISOString().slice(0, 10); }
+function number(t) {
+  return String(state.n || 1).padStart(4, '0') + '-' + TYPES[t].letter;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function applyDefaults(typeChanged) {
+  const t = TYPES[state.type];
+  if (typeChanged || !touched.reason) state.reason = t.reason;
+  if (typeChanged || !touched.org) state.org = t.org;
+  $('reasonLabel').textContent = t.reasonLabel;
+  $('amountRow').style.display = t.amount ? 'block' : 'none';
+}
+
+function toForm() {
+  ['type', 'who', 'reason', 'amount', 'unit', 'extra', 'org', 'role', 'signer', 'date', 'color'].forEach((k) => { $(k).value = state[k]; });
+}
+
+function stampSvg(org, color) {
+  const text = org.toUpperCase().slice(0, 40);
+  return `
+    <defs><path id="arc" d="M100,100 m-70,0 a70,70 0 1,1 140,0 a70,70 0 1,1 -140,0"/></defs>
+    <circle cx="100" cy="100" r="92" fill="none" stroke="${color}" stroke-width="5"/>
+    <circle cx="100" cy="100" r="84" fill="none" stroke="${color}" stroke-width="1.5"/>
+    <circle cx="100" cy="100" r="48" fill="none" stroke="${color}" stroke-width="2"/>
+    <text font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="${color}" letter-spacing="1.6">
+      <textPath href="#arc" startOffset="0" textLength="430">${esc(text)}</textPath>
+    </text>
+    <text x="100" y="94" text-anchor="middle" font-family="Georgia, serif" font-size="20" font-weight="700" fill="${color}">ОК</text>
+    <text x="100" y="116" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="${color}" letter-spacing="1">ШУТКА</text>`;
+}
+
+function render() {
+  const t = TYPES[state.type];
+  $('sheet').style.setProperty('--c', state.color);
+  $('pOrg').textContent = state.org || t.org;
+  $('pTitle').textContent = t.title;
+  $('pNum').textContent = '№ ' + number(state.type);
+  const who = state.who.trim() || '________________';
+  let text;
+  if (state.type === 'shtraf') {
+    text = `${t.prefix} <span class="who">${esc(who)}</span> ${t.mid}<br>${esc(state.reason)}.<br>Размер штрафа: <b>${esc(state.amount)} ${esc(state.unit)}</b>`;
+  } else {
+    text = `${t.prefix} <span class="who">${esc(who)}</span> ${t.mid} ${esc(state.reason)}.`;
+  }
+  if (state.extra.trim()) text += `<span class="extra">${esc(state.extra)}</span>`;
+  $('pBody').innerHTML = text;
+  $('pRole').textContent = state.role;
+  $('pDate').textContent = state.date ? new Date(state.date + 'T00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) + ' г.' : '';
+  $('pSigner').textContent = state.signer ? `/ ${state.signer} /` : '/ подпись /';
+  $('pScrawl').textContent = state.signer;
+  $('stamp').innerHTML = stampSvg(state.org || t.org, state.color);
+
+  const bad = REAL_ORG.test(state.org) || REAL_ORG.test(state.role);
+  $('warn').style.display = bad ? 'block' : 'none';
+  $('warn').textContent = bad ? 'Это похоже на название настоящего органа или организации. Придумайте вымышленное название — иначе печать отключена.' : '';
+  $('printBtn').disabled = bad;
+  fit();
+}
+
+// Масштабируем лист по ширине экрана
+function fit() {
+  const stage = $('stage'), scaler = $('scaler'), sheet = $('sheet');
+  const w = sheet.offsetWidth, h = sheet.offsetHeight;
+  const k = Math.min(1, (stage.clientWidth - 4) / w);
+  scaler.style.transform = `scale(${k})`;
+  scaler.style.height = h * k + 'px';
+  scaler.style.width = w + 'px';
+  stage.style.height = 'auto';
+}
+window.addEventListener('resize', fit);
+
+document.querySelectorAll('.form input, .form select, .form textarea').forEach((el) => {
+  el.addEventListener('input', () => {
+    const k = el.id;
+    state[k] = el.value;
+    if (k === 'type') { applyDefaults(true); toForm(); }
+    else if (k === 'reason' || k === 'org') touched[k] = true;
+    render();
+    app.save({ state, touched });
+  });
+});
+
+$('printBtn').onclick = () => {
+  state.n = (state.n || 0) + 1; // новый номер для каждого напечатанного документа
+  render();
+  app.save({ state, touched });
+  window.print();
+};
+
+(async () => {
+  const saved = await app.load();
+  if (saved && saved.state) { Object.assign(state, saved.state); Object.assign(touched, saved.touched || {}); }
+  if (!state.date) state.date = today();
+  if (!state.n) state.n = Math.floor(Math.random() * 900) + 100;
+  applyDefaults(false);
+  toForm();
+  render();
+})();
+</script>
+</body>
+</html>

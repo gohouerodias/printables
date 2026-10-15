@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход — Распечатайэто</title>
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap"><a class="logo" href="/">Распечатай<span>это</span></a></div>
+</header>
+
+<main class="wrap">
+  <div class="panel card" style="padding:28px">
+    <h1 id="title">Вход</h1>
+    <form id="form">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="password">Пароль</label>
+      <input id="password" type="password" autocomplete="current-password" minlength="8" required>
+      <div class="msg" id="msg" role="alert"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="submit" type="submit">Войти</button>
+        <button class="btn ghost" id="switch" type="button">Создать аккаунт</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script>
+let mode = 'login';
+const $ = (id) => document.getElementById(id);
+const next = new URLSearchParams(location.search).get('next');
+
+function render() {
+  const signup = mode === 'signup';
+  $('title').textContent = signup ? 'Создать аккаунт' : 'Вход';
+  $('submit').textContent = signup ? 'Зарегистрироваться' : 'Войти';
+  $('switch').textContent = signup ? 'У меня уже есть аккаунт' : 'Создать аккаунт';
+  $('password').autocomplete = signup ? 'new-password' : 'current-password';
+  $('msg').textContent = '';
+}
+$('switch').onclick = () => { mode = mode === 'login' ? 'signup' : 'login'; render(); };
+
+$('form').onsubmit = async (e) => {
+  e.preventDefault();
+  $('submit').disabled = true;
+  try {
+    const r = await fetch('/api/' + mode, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('email').value, password: $('password').value }),
+    });
+    const d = await r.json();
+    if (!r.ok) { $('msg').textContent = d.error || 'Ошибка'; return; }
+    // только внутренние адреса вида /app/...
+    location.href = next && /^\/app\/[a-z]+$/.test(next) ? next : '/account.html';
+  } catch {
+    $('msg').textContent = 'Нет связи с сервером';
+  } finally {
+    $('submit').disabled = false;
+  }
+};
+render();
+</script>
+</body>
+</html>
