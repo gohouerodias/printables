@@ -143,6 +143,7 @@
 <script src="/app-common.js"></script>
 <script>
 const app = new PrintApp('rodoslovnaya');
+app.getCount = () => state.people.length;
 const $ = (id) => document.getElementById(id);
 
 const PAPERS = { A4L: [297, 210, 'A4 landscape'], A4P: [210, 297, 'A4 portrait'], A3L: [420, 297, 'A3 landscape'], A3P: [297, 420, 'A3 portrait'] };
@@ -362,7 +363,7 @@ function renderEditor() {
   $('f_spouse').innerHTML = opt(state.people.filter((x) => x.id !== p.id), p.spouse, '— нет —');
 }
 
-function persist() { app.save(state); }
+function persist() { app.save(state); app.updateLock(); }
 function changed(full) { renderPeople(); if (full) renderEditor(); renderSheet(); persist(); }
 
 function setSpouse(p, newId_) {
@@ -381,6 +382,7 @@ $('people').addEventListener('click', (e) => {
   if (b) { selected = b.dataset.id; renderPeople(); renderEditor(); }
 });
 $('add').onclick = () => {
+  if (app.overLimit(state.people.length + 1)) return app.showPaywall(app.limitMessage());
   const p = { id: newId(), name: '', years: '', title: '', father: '', mother: '', spouse: '' };
   state.people.push(p);
   selected = p.id;
@@ -437,13 +439,14 @@ $('demo').onclick = () => {
   const me = mk('Алексей', '2002', 'Хранитель семейных легенд', { father: dad.id, mother: mom.id });
   const sis = mk('Катя', '2006', 'Директор семейных праздников', { father: dad.id, mother: mom.id });
   const cousin = mk('Игорь', '2004', 'Главный по анекдотам', { mother: aunt.id });
-  state.people = [gf, gm, dad, mom, aunt, me, sis, cousin];
+  // В бесплатной версии пример короче (5 человек), в подписке — полный (8)
+  state.people = app.overLimit(8) ? [gf, gm, dad, mom, me] : [gf, gm, dad, mom, aunt, me, sis, cousin];
   state.surname = state.surname || 'Петровых';
   selected = null;
   toForm(); changed(true);
 };
 
-$('printBtn').onclick = () => window.print();
+$('printBtn').onclick = () => app.print({ people: state.people.length });
 
 function toForm() {
   $('surname').value = state.surname; $('motto').value = state.motto;
@@ -455,6 +458,7 @@ function toForm() {
   if (saved && Array.isArray(saved.people)) Object.assign(state, saved);
   toForm();
   renderPeople(); renderEditor(); renderSheet();
+  app.quota();
   // Шрифты/размеры устаканились — подгоняем ещё раз
   setTimeout(fitTree, 150);
 })();

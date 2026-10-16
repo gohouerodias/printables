@@ -220,7 +220,8 @@ $('add').onclick = () => {
 $('reset').onclick = () => {
   if (confirm('Вернуть исходный набор «' + THEMES[state.theme].name.replace(/^\S+\s/, '') + '»?')) { loadTheme(state.theme); refresh(); }
 };
-$('printBtn').onclick = () => window.print();
+// Бесплатно — один набор (одна тема); его можно править и печатать снова
+$('printBtn').onclick = () => app.print({ fp: 'theme:' + state.theme });
 
 (async () => {
   const saved = await app.load();
@@ -231,6 +232,7 @@ $('printBtn').onclick = () => window.print();
     loadTheme('love');
   }
   toForm(); render();
+  app.quota();
 })();
 </script>
 </body>

@@ -50,19 +50,57 @@ const billing = require('./lib/billing');
   r = await call('POST', '/api/signup', { email: 'user@example.ru', password: 'password123' });
   assert.equal(r.status, 409); ok('повторный email отклонён');
 
-  // --- без подписки ---
+  // --- без подписки: бесплатный режим с лимитами ---
   r = await call('GET', '/app/spravki');
-  assert.equal(r.status, 302); assert.match(r.loc, /account\.html\?need=spravki/); ok('без подписки — редирект в кабинет');
+  assert.equal(r.status, 200); ok('без подписки приложение открывается в бесплатном режиме');
   r = await call('PUT', '/api/data/spravki', { x: 1 });
-  assert.equal(r.status, 402); ok('сохранение без подписки закрыто (402)');
+  assert.equal(r.status, 200); ok('данные сохраняются и без подписки');
+  r = await call('GET', '/api/quota/spravki');
+  assert.equal(r.json.subscribed, false); assert.equal(r.json.limit, 2); assert.equal(r.json.remaining, 2); ok('лимит «Справок»: 2 документа');
+
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-a' });
+  assert.equal(r.status, 200); assert.equal(r.json.status.remaining, 1);
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-a' });
+  assert.equal(r.status, 200); assert.equal(r.json.status.remaining, 1); ok('повторная печать того же документа не тратит лимит');
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-b' });
+  assert.equal(r.status, 200); assert.equal(r.json.status.remaining, 0);
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-c' });
+  assert.equal(r.status, 402); assert.equal(r.json.status.remaining, 0); ok('третий документ — нужна подписка (402)');
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-a' });
+  assert.equal(r.status, 200); ok('уже напечатанный документ по-прежнему можно перепечатать');
+
+  r = await call('POST', '/api/use/kupony', { fp: 'theme:love' });
+  assert.equal(r.status, 200);
+  r = await call('POST', '/api/use/kupony', { fp: 'theme:love' });
+  assert.equal(r.status, 200); ok('Купоны: один набор можно печатать повторно');
+  r = await call('POST', '/api/use/kupony', { fp: 'theme:ny' });
+  assert.equal(r.status, 402); ok('Купоны: второй набор — нужна подписка (402)');
+
+  const ppl = (n) => ({ people: Array.from({ length: n }, (_, i) => ({ id: 'p' + i })) });
+  r = await call('PUT', '/api/data/rodoslovnaya', ppl(5));
+  assert.equal(r.status, 200); ok('Родословная: 5 человек сохраняются');
+  r = await call('PUT', '/api/data/rodoslovnaya', ppl(6));
+  assert.equal(r.status, 402); ok('Родословная: 6-й человек — нужна подписка (402)');
+  r = await call('GET', '/api/quota/rodoslovnaya');
+  assert.equal(r.json.used, 5); assert.equal(r.json.remaining, 0);
+  r = await call('POST', '/api/use/rodoslovnaya', { people: 5 });
+  assert.equal(r.status, 200);
+  r = await call('POST', '/api/use/rodoslovnaya', { people: 6 });
+  assert.equal(r.status, 402); ok('Родословная: печать больше 5 человек закрыта без подписки');
+  r = await call('POST', '/api/use/nope', { fp: 'x' });
+  assert.equal(r.status, 404); ok('неизвестное приложение — 404');
 
   // --- подписка на ОДНО приложение не открывает другие ---
   r = await call('POST', '/api/subscribe', { app: 'spravki' });
   assert.equal(r.status, 200);
   r = await call('GET', '/app/spravki');
   assert.equal(r.status, 200); assert.match(r.text, /Справки о важном/); ok('после подписки приложение открывается');
-  r = await call('GET', '/app/kupony');
-  assert.equal(r.status, 302); ok('другое приложение остаётся закрытым');
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-z1' });
+  assert.equal(r.status, 200); assert.equal(r.json.status.subscribed, true);
+  for (let i = 0; i < 5; i++) assert.equal((await call('POST', '/api/use/spravki', { fp: 'doc-many-' + i })).status, 200);
+  ok('с подпиской печать без ограничений');
+  r = await call('POST', '/api/use/kupony', { fp: 'theme:bday' });
+  assert.equal(r.status, 402); ok('подписка на одно приложение не снимает лимит в другом');
   r = await call('POST', '/api/subscribe', { app: 'nope' });
   assert.equal(r.status, 400); ok('неизвестное приложение отклонено');
 
@@ -108,8 +146,11 @@ const billing = require('./lib/billing');
 
   // --- истёкшая подписка ---
   db.prepare("UPDATE subscriptions SET paid_until = ? WHERE app = 'spravki'").run(Date.now() - 1000);
-  r = await call('GET', '/app/spravki');
-  assert.equal(r.status, 302); ok('истёкшая подписка закрывает доступ');
+  r = await call('POST', '/api/use/spravki', { fp: 'doc-new' });
+  assert.equal(r.status, 402); ok('истёкшая подписка: снова действует бесплатный лимит');
+  r = await call('GET', '/api/me');
+  const sp = r.json.apps.find((x) => x.slug === 'spravki');
+  assert.equal(sp.active, false); assert.equal(sp.free.remaining, 0); ok('/api/me показывает остаток бесплатного лимита');
 
   // --- раскладка дерева ---
   const html = fs.readFileSync(path.join(__dirname, 'apps', 'tree.html'), 'utf8');

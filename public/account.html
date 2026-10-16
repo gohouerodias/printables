@@ -33,6 +33,15 @@ const ICONS = { spravki: '📜', kupony: '🎟️', rodoslovnaya: '🌳' };
 const fmt = (ms) => new Date(ms).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+function freeNote(f) {
+  if (!f) return '';
+  const unit = f.limit === 1 ? f.forms[1] : f.forms[2];
+  const text = f.kind === 'people'
+    ? 'Бесплатно: до ' + f.limit + ' человек в древе'
+    : 'Бесплатно: осталось ' + f.remaining + ' из ' + f.limit + ' ' + unit + ' для печати';
+  return '<div style="font-size:13px;margin-top:6px">' + esc(text) + '</div>';
+}
+
 async function post(url, body) {
   const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
   return { ok: r.ok, data: await r.json().catch(() => ({})) };
@@ -48,6 +57,11 @@ async function load() {
     if (a && !a.active) $('notice').innerHTML = '<div class="notice">Чтобы открыть «' + esc(a.title) + '», оформите подписку ниже.</div>';
   }
 
+  if (params.get('upgrade')) {
+    const a = d.apps.find((x) => x.slug === params.get('upgrade'));
+    if (a && !a.active) $('notice').innerHTML = '<div class="notice">Бесплатный лимит в «' + esc(a.title) + '» исчерпан. Оформите подписку, чтобы продолжить.</div>';
+  }
+
   $('list').innerHTML = d.apps.map((a) => {
     let status, actions;
     if (a.active) {
@@ -57,8 +71,9 @@ async function load() {
           ? '<button class="btn ghost" data-act="cancel" data-app="' + a.slug + '">Отключить автопродление</button>'
           : '<span style="color:var(--muted);font-size:14px">Автопродление выключено</span>');
     } else {
-      status = '<span class="tag off">' + (a.paidUntil ? 'Подписка закончилась' : 'Не оформлена') + '</span>';
-      actions = '<button class="btn" data-act="buy" data-app="' + a.slug + '">Оформить за ' + parseInt(d.price, 10) + ' ₽ / мес</button>';
+      status = '<span class="tag off">' + (a.paidUntil ? 'Подписка закончилась' : 'Не оформлена') + '</span>' + freeNote(a.free);
+      actions = '<a class="btn" href="/app/' + a.slug + '">Попробовать бесплатно</a>' +
+        '<button class="btn" data-act="buy" data-app="' + a.slug + '">Оформить за ' + parseInt(d.price, 10) + ' ₽ / мес</button>';
     }
     return '<article class="card"><div class="emoji">' + (ICONS[a.slug] || '') + '</div><h2>' + esc(a.title) + '</h2>' +
       '<div>' + status + '</div><div class="row" style="margin-top:6px">' + actions + '</div></article>';

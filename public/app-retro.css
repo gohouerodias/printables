@@ -122,3 +122,50 @@ body .pbtn.on {
   font-weight: bold;
 }
 body .pbtn small { color: inherit; opacity: .8; }
+
+/* ---------- бесплатные лимиты: плашка и окно «нужна подписка» ---------- */
+.quotabar {
+  display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+  padding: 6px 14px;
+  background: #ffffe1;
+  border-bottom: 2px solid #000;
+  font: bold 13px Arial, sans-serif;
+  color: #000;
+}
+.quotabar .qbtn:link, .quotabar .qbtn:visited {
+  padding: 3px 10px;
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  background: #c0c0c0; color: #000080; text-decoration: none;
+}
+.paywall {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, .35); padding: 16px;
+}
+.pwin {
+  width: min(420px, 100%);
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .5);
+  font-family: Arial, sans-serif; color: #000;
+}
+.pwin .ptitle { margin: 2px; padding: 3px 8px; background: linear-gradient(90deg, #000080, #1084d0); color: #fff; font: bold 14px Arial, sans-serif; }
+.pwin .pbody { padding: 14px; font-size: 14px; }
+.pwin .pbody p { margin: 0 0 10px; }
+.pwin .pprice:empty { display: none; }
+.pwin .prow { display: flex; gap: 10px; justify-content: flex-end; }
+.pwin .pbuy:link, .pwin .pbuy:visited, .pwin .pclose {
+  padding: 5px 14px;
+  border: 2px solid; border-color: #fff #404040 #404040 #fff;
+  background: #c0c0c0; color: #000080;
+  font: bold 14px Arial, sans-serif; text-decoration: none; cursor: pointer;
+}
+/* Печать мимо кнопки (Ctrl+P) закрыта, пока нет подписки или свободного лимита */
+@media print {
+  .quotabar, .paywall { display: none !important; }
+  body.locked .layout { display: none !important; }
+  body.locked::before {
+    content: "Печать недоступна. Нажмите кнопку «Печать / PDF» на странице или оформите подписку.";
+    display: block; padding: 20mm; font: 16pt Arial, sans-serif; color: #000;
+  }
+}

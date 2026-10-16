@@ -16,6 +16,7 @@ const db = require('./lib/db');
 const auth = require('./lib/auth');
 const billing = require('./lib/billing');
 const yk = require('./lib/yookassa');
+const quota = require('./lib/quota');
 
 const { APPS } = auth;
 const PORT = Number(process.env.PORT || 3000);
@@ -83,6 +84,7 @@ app.get('/api/me', (req, res) => {
       a.autoRenew = Number(s.auto_renew) === 1;
     }
   }
+  for (const a of apps) a.free = a.active ? null : quota.status(req.user.id, a.slug, false);
   res.json({ user: { email: req.user.email }, apps, price: billing.PRICE });
 });
 
@@ -155,21 +157,53 @@ app.post('/api/resume', auth.requireUser, (req, res, next) => {
   setAutoRenew(1)(req, res, next);
 });
 
+// ---------- бесплатные лимиты (без подписки) ----------
+// Справки: 2 документа · Купоны: 1 набор · Родословная: до 5 человек. Цифры — в lib/quota.js
+const quotaStatus = (userId, slug) => ({
+  ...quota.status(userId, slug, auth.hasActiveSub(userId, slug)),
+  price: parseInt(billing.PRICE, 10),
+});
+
+app.get('/api/quota/:app', auth.requireUser, (req, res) => {
+  if (!APPS[req.params.app]) return res.status(404).json({ error: 'Нет такого приложения' });
+  res.json(quotaStatus(req.user.id, req.params.app));
+});
+
+// Вызывается кнопкой «Печать»: у подписчика пропускает всегда, у остальных — пока не исчерпан лимит
+app.post('/api/use/:app', auth.requireUser, (req, res) => {
+  const slug = req.params.app;
+  if (!APPS[slug]) return res.status(404).json({ error: 'Нет такого приложения' });
+  if (!auth.hasActiveSub(req.user.id, slug)) {
+    const body = req.body || {};
+    const r = quota.authorizePrint(req.user.id, slug, body.fp, body.people);
+    if (!r.ok) return res.status(402).json({ error: r.error, status: quotaStatus(req.user.id, slug) });
+  }
+  res.json({ ok: true, status: quotaStatus(req.user.id, slug) });
+});
+
 // ---------- данные пользователя в приложениях ----------
-function requireSub(req, res, next) {
+// Данные доступны любому вошедшему пользователю; ограничения — в quota.js
+function requireApp(req, res, next) {
   const slug = req.params.app;
   if (!APPS[slug]) return res.status(404).json({ error: 'Нет такого приложения' });
   if (!req.user) return res.status(401).json({ error: 'Нужно войти в аккаунт' });
-  if (!auth.hasActiveSub(req.user.id, slug)) return res.status(402).json({ error: 'Подписка не активна' });
   next();
 }
 
-app.get('/api/data/:app', requireSub, (req, res) => {
+app.get('/api/data/:app', requireApp, (req, res) => {
   const row = db.prepare('SELECT json FROM app_data WHERE user_id = ? AND app = ?').get(req.user.id, req.params.app);
   res.type('json').send(row ? row.json : 'null');
 });
 
-app.put('/api/data/:app', requireSub, (req, res) => {
+app.put('/api/data/:app', requireApp, (req, res) => {
+  const slug = req.params.app;
+  const f = quota.FREE[slug];
+  if (f.kind === 'people' && !auth.hasActiveSub(req.user.id, slug) && quota.countPeople(req.body) > f.limit) {
+    return res.status(402).json({
+      error: `В бесплатной версии — до ${f.limit} человек в древе.`,
+      status: quotaStatus(req.user.id, slug),
+    });
+  }
   const json = JSON.stringify(req.body === undefined ? null : req.body);
   if (json.length > 900000) return res.status(413).json({ error: 'Слишком много данных' });
   db.prepare(
@@ -184,7 +218,6 @@ app.get('/app/:app', (req, res) => {
   const slug = req.params.app;
   if (!APPS[slug]) return res.status(404).send('Не найдено');
   if (!req.user) return res.redirect(`/login.html?next=${encodeURIComponent('/app/' + slug)}`);
-  if (!auth.hasActiveSub(req.user.id, slug)) return res.redirect(`/account.html?need=${slug}`);
   res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'apps', APPS[slug].file));
 });
